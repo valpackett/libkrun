@@ -25,8 +25,8 @@ use rutabaga_gfx::{
 };
 use rutabaga_gfx::{
     RUTABAGA_MAP_CACHE_MASK, RUTABAGA_PATH_TYPE_WAYLAND, ResourceCreate3D, ResourceCreateBlob,
-    Rutabaga, RutabagaBuilder, RutabagaChannel, RutabagaFence, RutabagaFenceHandler, RutabagaIovec,
-    Transfer3D,
+    Rutabaga, RutabagaBuilder, RutabagaDescriptor, RutabagaFence, RutabagaFenceHandler,
+    RutabagaIovec, RutabagaPath, RutabagaResult, Transfer3D, VirtioFsLookup,
 };
 use std::collections::BTreeMap;
 use std::env;
@@ -44,6 +44,33 @@ use crate::virtio::display::DisplayInfo;
 use crate::virtio::fs::ExportTable;
 use crate::virtio::gpu::protocol::VIRTIO_GPU_FLAG_INFO_RING_IDX;
 use crate::virtio::{InterruptTransport, VirtioShmRegion};
+
+struct ExportTableLookup {
+    table: ExportTable,
+}
+
+impl ExportTableLookup {
+    fn new(table: ExportTable) -> Self {
+        Self { table }
+    }
+}
+
+impl VirtioFsLookup for ExportTableLookup {
+    fn get_exported_descriptor(
+        &self,
+        fs_id: u64,
+        handle: u64,
+    ) -> RutabagaResult<RutabagaDescriptor> {
+        let table = self.table.lock().unwrap();
+        let file = table
+            .get(&(fs_id, handle))
+            .ok_or(rutabaga_gfx::RutabagaError::InvalidResourceId)?
+            .try_clone()
+            .map_err(|_| rutabaga_gfx::RutabagaError::InvalidResourceId)?;
+
+        Ok(file.into())
+    }
+}
 
 fn sglist_to_rutabaga_iovecs(
     vecs: &[(GuestAddress, usize)],
@@ -258,7 +285,7 @@ impl VirtioGpu {
             pw_path.push(name);
             rutabaga_paths.push(RutabagaPath {
                 path: pw_path,
-                path_type: RUTABAGA_PATH_TYPE_PW,
+                path_type: RUTABAGA_PATH_TYPE_PIPEWIRE,
             });
         }
 
@@ -305,7 +332,8 @@ impl VirtioGpu {
             .set_use_render_server(use_render_server);
 
         if let Some(export_table) = export_table {
-            builder = builder.set_export_table(export_table);
+            let lookup: Arc<dyn VirtioFsLookup> = Arc::new(ExportTableLookup::new(export_table));
+            builder = builder.set_virtiofs_lookup(lookup);
         }
 
         builder.build().ok()
