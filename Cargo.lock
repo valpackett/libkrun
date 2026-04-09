@@ -961,9 +961,8 @@ dependencies = [
 
 [[package]]
 name = "mesa3d_util"
-version = "0.1.76-libkrun.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a95e11093683dd73b2e70dbd3f848cddd54f05a971fdcb5e3dc655773062fd79"
+version = "0.1.76"
+source = "git+https://github.com/magma-gpu/rutabaga_gfx?branch=main#e0347968d18b8c07cf9c7358b4f6a8db26a88b31"
 dependencies = [
  "cfg-if",
  "libc",
@@ -1305,9 +1304,8 @@ checksum = "b39cdef0fa800fc44525c84ccb54a029961a8215f9619753635a9c0d2538d46d"
 
 [[package]]
 name = "rutabaga_gfx"
-version = "0.1.76-libkrun.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ecc09e93072d8a9282568ebf9958e77f5f15a04eadbe41074efdfe57d6507db2"
+version = "0.1.76"
+source = "git+https://github.com/magma-gpu/rutabaga_gfx?branch=main#e0347968d18b8c07cf9c7358b4f6a8db26a88b31"
 dependencies = [
  "cfg-if",
  "libc",
