@@ -24,9 +24,10 @@ use rutabaga_gfx::{
     RUTABAGA_MAP_ACCESS_WRITE, RUTABAGA_PATH_TYPE_PIPEWIRE, RUTABAGA_PATH_TYPE_X11,
 };
 use rutabaga_gfx::{
-    RUTABAGA_MAP_CACHE_MASK, RUTABAGA_PATH_TYPE_WAYLAND, ResourceCreate3D, ResourceCreateBlob,
-    Rutabaga, RutabagaBuilder, RutabagaDescriptor, RutabagaFence, RutabagaFenceHandler,
-    RutabagaIovec, RutabagaPath, RutabagaResult, Transfer3D, VirtioFsLookup,
+    RUTABAGA_MAP_CACHE_MASK, RUTABAGA_PATH_TYPE_DBUS_SESSION, RUTABAGA_PATH_TYPE_WAYLAND,
+    ResourceCreate3D, ResourceCreateBlob, Rutabaga, RutabagaBuilder, RutabagaDescriptor,
+    RutabagaFence, RutabagaFenceHandler, RutabagaIovec, RutabagaPath, RutabagaResult, Transfer3D,
+    VirtioFsLookup,
 };
 use std::collections::BTreeMap;
 use std::env;
@@ -294,6 +295,13 @@ impl VirtioGpu {
             rutabaga_paths.push(RutabagaPath {
                 path: pw_path,
                 path_type: RUTABAGA_PATH_TYPE_PIPEWIRE,
+            });
+        }
+        #[cfg(target_os = "linux")]
+        if let Ok(dbus_sock) = env::var("RUTABAGA_DBUS_CLIENT_SOCKET") {
+            rutabaga_paths.push(RutabagaPath {
+                path: PathBuf::from(dbus_sock),
+                path_type: RUTABAGA_PATH_TYPE_DBUS_SESSION,
             });
         }
 
